@@ -47,3 +47,16 @@ def critic_agent(state: AgentState) -> AgentState:
     state["final_output"] = state["draft"]
     state["latency"]["critic"] = time.time() - start
     return state
+
+def planner_researcher_agent(state: AgentState) -> AgentState:
+    start = time.time()
+    messages = [
+        SystemMessage(content="You are a planner and researcher. Given a task, produce a step-by-step plan and gather all relevant facts needed to complete it."),
+        HumanMessage(content=f"Task: {state['task']}")
+    ]
+    response = llm.invoke(messages)
+    state["plan"] = response.content
+    state["research"] = response.content
+    state["latency"]["planner_researcher"] = time.time() - start
+    return state
+
