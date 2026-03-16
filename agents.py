@@ -60,3 +60,32 @@ def planner_researcher_agent(state: AgentState) -> AgentState:
     state["latency"]["planner_researcher"] = time.time() - start
     return state
 
+def controller_agent(state: AgentState) -> str:
+    messages = [
+        SystemMessage(content="You are a router. Given a task, reply with only one word: 'simple' if the task needs no research, or 'complex' if it requires research and fact gathering."),
+        HumanMessage(content=f"Task: {state['task']}")
+    ]
+    response = llm.invoke(messages)
+    decision = response.content.strip().lower()
+    state["latency"]["controller"] = 0
+    return "simple" if "simple" in decision else "complex"
+
+def summarize_context(text: str) -> str:
+    messages = [
+        SystemMessage(content="Summarize the following in 3 sentences maximum. Be concise and keep only the most important facts."),
+        HumanMessage(content=text)
+    ]
+    response = llm.invoke(messages)
+    return response.content
+
+def researcher_compressed_agent(state: AgentState) -> AgentState:
+    start = time.time()
+    messages = [
+        SystemMessage(content="You are a researcher. Given a plan, gather and summarize relevant facts needed to complete it."),
+        HumanMessage(content=f"Plan: {state['plan']}")
+    ]
+    response = llm.invoke(messages)
+    full_research = response.content
+    state["research"] = summarize_context(full_research)
+    state["latency"]["researcher"] = time.time() - start
+    return state
