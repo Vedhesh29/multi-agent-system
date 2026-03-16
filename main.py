@@ -1,8 +1,8 @@
-from graph import build_graph, build_merged_graph, build_conditional_graph, build_compressed_graph
+from graph import build_graph, build_merged_graph, build_conditional_graph, build_compressed_graph, build_optimized_graph
 import json
 import csv, os
 
-app = build_compressed_graph()
+app = build_optimized_graph()
 
 tasks = [
     "Explain the causes of the 2008 financial crisis in 3 paragraphs.",
@@ -20,8 +20,8 @@ def log_run(task, result, variant="baseline"):
         "total_latency": sum(result["latency"].values()),
         **{f"latency_{k}": v for k, v in result["latency"].items()}
     }
-    file_exists = os.path.exists("compressed_metrics.csv")
-    with open("compressed_metrics.csv", "a", newline="") as f:
+    file_exists = os.path.exists("optimized_metrics.csv")
+    with open("optimized_metrics.csv", "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=row.keys())
         if not file_exists:
             writer.writeheader()
@@ -46,4 +46,4 @@ for task in tasks:
     print(result["critique"])
     print("\n=== LATENCY PER AGENT ===")
     print(json.dumps(result["latency"], indent=2))
-    log_run(task, result, variant="controller")
+    log_run(task, result, variant="optimized")
