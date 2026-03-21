@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END
 from state import AgentState
-from agents import planner_agent, researcher_agent, writer_agent, critic_agent, planner_researcher_agent, controller_agent, researcher_compressed_agent
+from agents import planner_agent, researcher_agent, writer_agent, critic_agent, planner_researcher_agent, controller_agent, researcher_compressed_agent, should_revise
 
 def build_graph():
     graph = StateGraph(AgentState)
@@ -33,7 +33,7 @@ def build_merged_graph():
 
     return graph.compile()
 
-def build_conditional_graph():
+def build_controller_graph():
     graph = StateGraph(AgentState)
 
     graph.add_node("planner", planner_agent)
@@ -92,5 +92,28 @@ def build_optimized_graph():
     graph.add_edge("researcher", "writer")
     graph.add_edge("writer", "critic")
     graph.add_edge("critic", END)
+
+    return graph.compile()
+
+def build_revision_graph():
+    graph = StateGraph(AgentState)
+
+    graph.add_node("planner", planner_agent)
+    graph.add_node("researcher", researcher_compressed_agent)
+    graph.add_node("writer", writer_agent)
+    graph.add_node("critic", critic_agent)
+
+    graph.set_entry_point("planner")
+    graph.add_edge("planner", "researcher")
+    graph.add_edge("researcher", "writer")
+    graph.add_edge("writer", "critic")
+    graph.add_conditional_edges(
+        "critic",
+        should_revise,
+        {
+            "revise": "writer",
+            "done": END
+        }
+    )
 
     return graph.compile()

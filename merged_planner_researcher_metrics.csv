@@ -1,0 +1,7 @@
+variant,task,total_latency,total_tokens,quality_score,latency_planner_researcher,latency_writer,latency_critic,tokens_planner_researcher,tokens_writer,tokens_critic
+merged_planner_researcher,Explain the causes of the 2008 financial crisis in 3 paragraphs.,41.864055156707764,2815,8.0,14.063462734222412,17.641867876052856,10.158724546432495,448,1402,965
+merged_planner_researcher,Explain how transformers work in NLP.,54.765854835510254,4113,9.0,18.078953742980957,27.092177867889404,9.594723224639893,680,2191,1242
+merged_planner_researcher,Summarize the pros and cons of renewable energy.,49.67624831199646,3772,8.0,18.851890563964844,19.72868800163269,11.095669746398926,712,2004,1056
+merged_planner_researcher,Describe the key events of World War 1.,52.24431800842285,4092,9.0,25.095762729644775,17.399127960205078,9.749427318572998,912,2291,889
+merged_planner_researcher,Explain gradient descent in machine learning.,58.24165368080139,4280,9.0,19.213156700134277,27.565529823303223,11.462967157363892,713,2265,1302
+merged_planner_researcher,What are the main causes of inflation?,63.11698937416077,4350,8.0,24.416225910186768,24.133363008499146,14.567400455474854,852,2344,1154

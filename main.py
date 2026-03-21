@@ -1,8 +1,9 @@
-from graph import build_graph, build_merged_graph, build_conditional_graph, build_compressed_graph, build_optimized_graph
+from graph import build_graph, build_merged_graph, build_controller_graph, build_compressed_graph, build_optimized_graph, build_revision_graph
+from agents import score_output
 import json
 import csv, os
 
-app = build_optimized_graph()
+app = build_revision_graph()
 
 tasks = [
     "Explain the causes of the 2008 financial crisis in 3 paragraphs.",
@@ -14,14 +15,20 @@ tasks = [
 ]
 
 def log_run(task, result, variant="baseline"):
+    quality_score = score_output(task, result["final_output"])
+    total_tokens = sum(result["token_usage"].values())
     row = {
         "variant": variant,
         "task": task,
         "total_latency": sum(result["latency"].values()),
-        **{f"latency_{k}": v for k, v in result["latency"].items()}
+        "total_tokens": total_tokens,
+        "quality_score": quality_score,
+        **{f"latency_{k}": v for k, v in result["latency"].items()},
+        **{f"tokens_{k}": v for k, v in result["token_usage"].items()}
     }
-    file_exists = os.path.exists("optimized_metrics.csv")
-    with open("optimized_metrics.csv", "a", newline="") as f:
+    filename = f"{variant}_metrics.csv"
+    file_exists = os.path.exists(filename)
+    with open(filename, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=row.keys())
         if not file_exists:
             writer.writeheader()
@@ -46,4 +53,6 @@ for task in tasks:
     print(result["critique"])
     print("\n=== LATENCY PER AGENT ===")
     print(json.dumps(result["latency"], indent=2))
-    log_run(task, result, variant="optimized")
+    print("\n=== TOKEN USAGE ===")
+    print(json.dumps(result["token_usage"], indent=2))
+    log_run(task, result, variant="revision")

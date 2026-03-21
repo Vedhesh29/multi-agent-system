@@ -3,6 +3,13 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from state import AgentState
 from llm import llm
 
+def get_token_count(response) -> int:
+    try:
+        meta = response.response_metadata
+        return meta.get("eval_count", 0) + meta.get("prompt_eval_count", 0)
+    except:
+        return 0
+
 def planner_agent(state: AgentState) -> AgentState:
     start = time.time()
     messages = [
@@ -12,6 +19,7 @@ def planner_agent(state: AgentState) -> AgentState:
     response = llm.invoke(messages)
     state["plan"] = response.content
     state["latency"]["planner"] = time.time() - start
+    state["token_usage"]["planner"] = get_token_count(response)
     return state
 
 def researcher_agent(state: AgentState) -> AgentState:
@@ -23,6 +31,7 @@ def researcher_agent(state: AgentState) -> AgentState:
     response = llm.invoke(messages)
     state["research"] = response.content
     state["latency"]["researcher"] = time.time() - start
+    state["token_usage"]["researcher"] = get_token_count(response)
     return state
 
 def writer_agent(state: AgentState) -> AgentState:
@@ -34,6 +43,7 @@ def writer_agent(state: AgentState) -> AgentState:
     response = llm.invoke(messages)
     state["draft"] = response.content
     state["latency"]["writer"] = time.time() - start
+    state["token_usage"]["writer"] = get_token_count(response)
     return state
 
 def critic_agent(state: AgentState) -> AgentState:
@@ -46,6 +56,7 @@ def critic_agent(state: AgentState) -> AgentState:
     state["critique"] = response.content
     state["final_output"] = state["draft"]
     state["latency"]["critic"] = time.time() - start
+    state["token_usage"]["critic"] = get_token_count(response)
     return state
 
 def planner_researcher_agent(state: AgentState) -> AgentState:
@@ -58,6 +69,7 @@ def planner_researcher_agent(state: AgentState) -> AgentState:
     state["plan"] = response.content
     state["research"] = response.content
     state["latency"]["planner_researcher"] = time.time() - start
+    state["token_usage"]["planner_researcher"] = get_token_count(response)
     return state
 
 def controller_agent(state: AgentState) -> str:
@@ -68,6 +80,7 @@ def controller_agent(state: AgentState) -> str:
     response = llm.invoke(messages)
     decision = response.content.strip().lower()
     state["latency"]["controller"] = 0
+    state["token_usage"]["controller"] = get_token_count(response)
     return "simple" if "simple" in decision else "complex"
 
 def summarize_context(text: str) -> str:
@@ -88,4 +101,27 @@ def researcher_compressed_agent(state: AgentState) -> AgentState:
     full_research = response.content
     state["research"] = summarize_context(full_research)
     state["latency"]["researcher"] = time.time() - start
+    state["token_usage"]["researcher"] = get_token_count(response)
     return state
+
+def score_output(task: str, output: str) -> float:
+    messages = [
+        SystemMessage(content="""You are an evaluator. Score the following output on a scale of 1-10 based on:
+            - Accuracy and correctness
+            - Completeness
+            - Clarity and structure
+            Return only a number between 1 and 10. Nothing else."""),
+        HumanMessage(content=f"Task: {task}\n\nOutput: {output}")
+    ]
+    response = llm.invoke(messages)
+    try:
+        return float(response.content.strip())
+    except:
+        return 0.0
+    
+def should_revise(state: AgentState) -> str:
+    critique = state.get("critique", "")
+    for score in ["1/10", "2/10", "3/10", "4/10", "5/10"]:
+        if score in critique:
+            return "revise"
+    return "done"
